@@ -1,0 +1,14 @@
+{
+  "name": "jaxcore-sonos-plugin",
+  "version": "0.0.0",
+  "description": "",
+  "author": "Jaxcore",
+  "dependencies": {
+    "jaxcore-plugin": "file:../jaxcore-plugin",
+    "jaxcore-spin": "file:../jaxcore-spin",
+    "sonos": "^1.8.1"
+  },
+  "devDependencies": {},
+  "scripts": {},
+  "license": "MIT"
+}
