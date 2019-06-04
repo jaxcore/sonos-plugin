@@ -1,13 +1,6 @@
 var EventEmitter = require('events');
-var net = require("net");
-var plugin = require('jaxcore-plugin');
-var log = plugin.createLogger('Sonos');
-// var sonos = require('sonos');
-
+var SonosClient = require('./client');
 const { DeviceDiscovery } = require('sonos');
-const scanner = DeviceDiscovery();
-
-//var SonosClient = require('./client');
 
 function SonosService() {
 	this.constructor();
@@ -17,31 +10,38 @@ function SonosService() {
 SonosService.prototype = new EventEmitter();
 SonosService.prototype.constructor = EventEmitter;
 
-SonosService.prototype.scan = function(callback, done) {
-	log('started scanning');
-	
-	var me = this;
-	
-	var handler = function(device) {
-		log('found device at ' + device.host);
-		
-		// device.deviceDescription(function(err,state) {
-		// 	if (err) {
-		// 		callback(err);
-		// 	}
-		// 	else {
-		// 		callback(null, device, state);
-		// 	}
-		// });
-	};
-	
-	scanner.addListener('DeviceAvailable', handler);
-	
-	setTimeout(function() {
-		scanner.removeListener('DeviceAvailable', handler);
-		console.log('stopped scanning');
-		done();
-	}, 10000);
+SonosService.prototype.connect = function(callback) {
+	DeviceDiscovery().once('DeviceAvailable', (device) => {
+		console.log('found', device.host);
+		let sonos = new SonosClient({}, device);
+		sonos.once('connect', function() {
+			callback(sonos);
+		});
+		sonos.connect();
+	});
 };
-
+SonosService.prototype.connectTo = function(host, callback) {
+	if (!this.clients[host]) {
+		this.clients[host] = new SonosClient({
+			host: host
+		});
+	}
+	let sonos = this.clients[host];
+	if (sonos.state.connected) {
+		callback(sonos);
+	}
+	else {
+		sonos.once('connect', function() {
+			console.log('sonos connected', host);
+			callback(sonos);
+		});
+		sonos.connect();
+	}
+};
+SonosService.prototype.scan = function() {
+	DeviceDiscovery((device) => {
+		console.log('found device at ' + device.host);
+		this.emit('device', device);
+	});
+};
 module.exports = new SonosService();

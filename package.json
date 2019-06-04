@@ -4,9 +4,7 @@
   "description": "",
   "author": "Jaxcore",
   "dependencies": {
-    "jaxcore-plugin": "file:../jaxcore-plugin",
-    "jaxcore-spin": "file:../jaxcore-spin",
-    "sonos": "^1.8.1"
+    "sonos": "^1.11.1"
   },
   "devDependencies": {},
   "scripts": {},

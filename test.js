@@ -1,58 +1,66 @@
 var Spin = require('jaxcore-spin');
-var plugin = require('jaxcore-plugin');
 var SonosService = require('./service');
-var SonosClient = require('./client');
 
-// SonosService.scan(function(err, device, state) {
-// 	console.log('found', device, state);
-// }, function() {
-// 	console.log('scan complete');
-// });
-
-let sonos = new SonosClient({
-	host: '192.168.0.31'
-});
-
-sonos.on('connected', function() {
-	console.log('connected');
-});
-
-sonos.connect();
-
-Spin.connectAll(function(spin) {
-	console.log('connected spin', spin.id, spin.state);
+SonosService.connect(function(sonos) {
+	console.log('Sonos connected', sonos.host);
 	
-	// spin.on('connect', function() {
-	// 	// adapter.emit('spin-connected', spin);
-	// 	console.log('spin connected', spin.state);
-	//
-	// 	process.exit();
-	//
-	// 	// var devices = {
-	// 	// 	spin: spin,
-	// 	// 	kodi: kodi,
-	// 	// 	receiver: receiver
-	// 	// };
-	// 	// var adapter = new KodiAdapter(devices);
-	// });
+	// sonos.setMinVolume(10);
+	// sonos.setMaxVolume(80);
 	
-	spin.on('disconnect', function() {
-		console.log('spin disconnected');
-	});
-	
-	spin.on('spin', function(direction) {
-		console.log('spin', direction);
+	Spin.connectBLE(function(spin) {
+		console.log('connected spin', spin.id, spin.state);
 		
-		if (direction===1) sonos.audio.volumeUp();
-		else sonos.audio.volumeDown();
-	});
-	
-	spin.on('button', function(pushed) {
-		console.log('button', pushed);
-	});
-	
-	spin.on('knob', function(pushed) {
-		console.log('knob', pushed);
+		spin.flash([0, 255, 0]);
+		
+		spin.on('disconnect', function() {
+			console.log('spin disconnected');
+		});
+		
+		sonos.on('volume', function(volumePercent, volume) {
+			console.log('volume', volumePercent, volume);
+			if (sonos.state.muted) {
+				spin.dial(sonos.state.volumePercent, [100,100,0], [255, 255, 0], [255, 255, 0]);
+			}
+			else {
+				spin.dial(volumePercent, [0, 0, 255], [255, 0, 0], [255, 255, 255]);
+			}
+		});
+		sonos.on('muted', function(muted) {
+			console.log('muted', muted);
+			if (muted) {
+				// spin.flash([255,255,0]);
+				spin.dial(sonos.state.volumePercent, [100,100,0], [255, 255, 0], [255, 255, 0]);
+			}
+			else {
+				spin.dial(sonos.state.volumePercent, [0, 0, 255], [255, 0, 0], [255, 255, 255]);
+			}
+		});
+		
+		spin.on('spin', function(direction) {
+			console.log('spin', direction);
+			if (direction === 1) {
+				sonos.volumeUp();
+			}
+			else {
+				sonos.volumeDown();
+			}
+		});
+		
+		spin.on('button', function(pushed) {
+			console.log('button', pushed);
+			if (pushed) {
+				sonos.toggleMuted();
+			}
+		});
+		
+		spin.on('knob', function(pushed) {
+			if (!pushed) {
+				console.log('knob', pushed);
+				sonos.togglePlayPause();
+			}
+		});
+		
 	});
 	
 });
+
