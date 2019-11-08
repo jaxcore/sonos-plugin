@@ -107,16 +107,16 @@ SonosClient.prototype.connect = function() {
 	//this.device.play().then(() => console.log('now playing'));
 	var me = this;
 	
-	this.device.getMuted().then((muted) => {
-		me.log(`first getMuted = ${muted}`);
-		this._setMuted(muted);
-		
-		this.device.getVolume().then((volume) => {
-			me.log(`first getVolume = ${volume}`);
-			me._setVolume(volume);
-			me.emit('connect');
+	this.getMuted(() => {
+		this.getVolume(() => {
+			this.getPlayState(() => {
+				this.startMonitor();
+				this.emit('connect');
+			});
 		});
 	});
+	
+	this.lastVolumeTime = null;
 	
 	this.device.on('Volume', function(v) {
 		console.log('on volume', v);
@@ -161,6 +161,7 @@ SonosClient.prototype._setVolume = function (v) {
 		volumePercent: percent
 	});
 	this.device.setVolume(v);
+	this.lastVolumeTime = new Date();
 	this.emit('volume', percent, v);
 };
 SonosClient.prototype.setVolume = function (v) {
@@ -206,6 +207,151 @@ SonosClient.prototype.setMuted = function (muted) {
 };
 SonosClient.prototype.togglePlayPause = function () {
 	this.device.togglePlayback();
+};
+
+SonosClient.prototype.getPlayState = function (callback) {
+	var me = this;
+	this.device.getCurrentState().then(function(currState) {
+		
+		console.log(currState + ' ' + me.state.position + ' / ' + me.state.duration);
+		
+		var playerActive, paused;
+		
+		if (currState === 'paused' || currState === 'transitioning') {
+			playerActive = true;
+			paused = true;
+		} else if (currState === 'playing') {
+			playerActive = true;
+			paused = false;
+		} else {
+			playerActive = false;
+			paused = false;
+		}
+		
+		if (playerActive !== me.state.paused || paused !== me.state.paused) {
+			me.state.playerActive = playerActive;
+			me.state.paused = paused;
+			me.emit('playState', {
+				playerActive: me.state.playerActive,
+				paused: me.state.paused
+			});
+		}
+	});
+	
+	this.device.currentTrack().then(function(track) {
+		// console.log('currentTrack', track);
+		/*
+		 { title: 'One Very Important Thought',
+		 artist: 'Boards Of Canada',
+		 album: 'Music Has The Right To Children',
+		 albumArtURI: 'http://192.168.0.160:3500/music/image?id=515897&flags=1',
+		 position: 36,
+		 duration: 79,
+		 albumArtURL: 'http://192.168.0.160:3500/music/image?id=515897&flags=1',
+		 uri: 'http://mobile-ACR-5e967ce961cf9aeb.x-udn/music/track.mp3?id=515897&flags=1' }
+		 */
+		if (track.position && track.duration) {
+		}
+		else {
+			track.position = 0;
+			track.duration = 0;
+			track.positionPercent = 0;
+		}
+		if (track.position !== this.state.position ||
+			track.duration !== this.state.duration) {
+			this.setState({
+				position: track.position,
+				duration: track.duration,
+				positionPercent: track.position / track.duration
+			});
+		}
+		//if (callback) callback();
+	});
+};
+
+SonosClient.prototype.play = function () {
+	var me = this;
+	this.device.play(function() {
+		me.state.playerActive = true;
+		me.state.paused = false;
+		me.emit('playState', {
+			playerActive: me.state.playerActive,
+			paused: me.state.paused
+		});
+	});
+};
+SonosClient.prototype.pause = function () {
+	var me = this;
+	this.device.pause(function() {
+		me.state.playerActive = true;
+		me.state.paused = true;
+		me.emit('playState', {
+			playerActive: me.state.playerActive,
+			paused: me.state.paused
+		});
+	});
+};
+SonosClient.prototype.stop = function () {
+	var me = this;
+	this.device.stop().then(function() {
+		me.state.playerActive = false;
+		me.state.paused = false;
+		me.emit('playState', {
+			playerActive: me.state.playerActive,
+			paused: me.state.paused
+		});
+	});
+};
+
+SonosClient.prototype.next = function () {
+	this.device.next(function() {
+	});
+};
+
+SonosClient.prototype.previous = function () {
+	this.device.previous().then(function() {
+		console.log('send previous');
+	});
+};
+
+SonosClient.prototype.seek = function (seconds) {
+	console.log('sonos seek '+seconds);
+	this.device.seek(seconds).then(function(err) {
+		console.log('sent seek', seconds);
+	});
+};
+
+SonosClient.prototype.getVolume = function (callback) {
+	if (this.lastVolumeTime === null || (new Date().getTime() - this.lastVolumeTime.getTime() > 1000)) {
+	//if (new Date().getTime() - this.lastVolumeTime.getTime() > 1000) {
+		this.device.getVolume().then((volume) => {
+			this.log(`first getVolume = ${volume}`);
+			this._setVolume(volume);
+			callback();
+		});
+	}
+};
+
+SonosClient.prototype.getMuted = function (callback) {
+	this.device.getMuted().then((muted) => {
+		this.log(`first getMuted = ${muted}`);
+		this._setMuted(muted);
+		callback();
+	});
+};
+
+SonosClient.prototype.startMonitor = function () {
+	clearInterval(this.monitor);
+	var me = this;
+	this.monitor = setInterval(function() {
+		me.getVolume(function() {});
+		me.getMuted(function() {});
+		me.getPlayState(function() {});
+	},500);
+};
+
+SonosClient.prototype.stopMonitor = function () {
+	clearInterval(this.monitor);
 };
 
 module.exports = SonosClient;
