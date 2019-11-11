@@ -1,10 +1,8 @@
-var SonosService = require('./sonos-service');
-var SonosAdapter = require('./sonos-adapter');
 module.exports = {
 	services: {
-		sonos: SonosService
+		sonos: require('./sonos-service')
 	},
 	adapters: {
-		sonos: SonosAdapter
+		sonos: require('./sonos-adapter')
 	}
 };
