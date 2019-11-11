@@ -1,11 +1,12 @@
-const plugin = require('jaxcore-plugin');
-const Client = plugin.Client;
+const {Service, createLogger} = require('jaxcore-plugin');
 const {DeviceDiscovery} = require('sonos');
 const SonosClient = require('./sonos-client');
 
-var sonosInstance;
+const log = createLogger('SonosService');
 
-class SonosService extends Client {
+let sonosInstance;
+
+class SonosService extends Service {
 	constructor() {
 		super();
 		this.clients = {};
@@ -13,7 +14,7 @@ class SonosService extends Client {
 	
 	// connect(callback) {
 	// 	DeviceDiscovery().once('DeviceAvailable', (device) => {
-	// 		console.log('found', device.host);
+	// 		log('found', device.host);
 	// 		let sonos = new SonosClient({}, device);
 	// 		sonos.once('connect', function () {
 	// 			callback(sonos);
@@ -34,7 +35,7 @@ class SonosService extends Client {
 	// 	}
 	// 	else {
 	// 		sonos.once('connect', function () {
-	// 			console.log('sonos connected', host);
+	// 			log('sonos connected', host);
 	// 			callback(sonos);
 	// 		});
 	// 		sonos.connect();
@@ -43,13 +44,13 @@ class SonosService extends Client {
 	//
 	scan() {
 		DeviceDiscovery((device) => {
-			console.log('found device at ' + device.host);
+			log('found device at ' + device.host);
 			this.emit('device', device);
 		});
 	}
 	
 	create(serviceId, serviceConfig, device) {
-		console.log('serviceConfig');
+		log('serviceConfig');
 		let client = new SonosClient(serviceId, serviceConfig, device);
 		this.clients[client.id] = client;
 		return client;
@@ -57,12 +58,12 @@ class SonosService extends Client {
 	
 	static id(serviceConfig) {
 		let id = 'sonos:'+serviceConfig.host+':'+serviceConfig.port;
-		console.log('SonosService.id', serviceConfig, 'id', id);
+		log('SonosService.id', serviceConfig, 'id', id);
 		return id;
 	}
 	
 	static getOrCreateInstance(serviceId, serviceConfig, callback) {
-		console.log('SonosService getOrCreateInstance', serviceId, serviceConfig);
+		log('SonosService getOrCreateInstance', serviceId, serviceConfig);
 		// process.exit();
 		
 		if (!sonosInstance) {
@@ -71,18 +72,18 @@ class SonosService extends Client {
 		
 		if (sonosInstance.clients[serviceId]) {
 			let instance = sonosInstance.clients[serviceId];
-			console.log('RETURNING SONOS CLIENT', instance);
+			log('RETURNING SONOS CLIENT', instance);
 			process.exit();
 			callback(null, instance);
 		}
 		else {
-			console.log('CREATE SONOS', serviceId, serviceConfig);
+			log('CREATE SONOS', serviceId, serviceConfig);
 			
 			sonosInstance.addListener('device', function(device) {
 				if (device.host === serviceConfig.host &&
 					device.port === serviceConfig.port) {
 					
-					console.log('found');
+					log('found');
 					
 					let instance = sonosInstance.create(serviceId, serviceConfig, device);
 					callback(null, instance);
@@ -93,7 +94,7 @@ class SonosService extends Client {
 			
 			sonosInstance.scan();
 			
-			// console.log('CREATED SONOS CLIENT', instance);
+			// log('CREATED SONOS CLIENT', instance);
 			
 			// process.exit();
 			// callback(null, instance);
