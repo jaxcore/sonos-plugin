@@ -2,13 +2,15 @@ const {Service, createLogger} = require('jaxcore-plugin');
 const {DeviceDiscovery} = require('sonos');
 const SonosClient = require('./sonos-client');
 
-const log = createLogger('Sonos');
+// const log = createLogger('c');
 
 let sonosInstance;
 
 class SonosService extends Service {
 	constructor() {
 		super();
+		this.log = createLogger('SonosService');
+		this.log('created');
 		this.clients = {};
 	}
 	
@@ -44,13 +46,13 @@ class SonosService extends Service {
 	//
 	scan() {
 		DeviceDiscovery((device) => {
-			log('found device at ' + device.host);
+			this.log('found device at ' + device.host);
 			this.emit('device', device);
 		});
 	}
 	
 	create(serviceStore, serviceId, serviceConfig, device) {
-		log('serviceConfig');
+		this.log('serviceConfig');
 		let client = new SonosClient(serviceStore, serviceId, serviceConfig, device);
 		this.clients[client.id] = client;
 		return client;
@@ -58,12 +60,12 @@ class SonosService extends Service {
 	
 	static id(serviceConfig) {
 		let id = 'sonos:'+serviceConfig.host+':'+serviceConfig.port;
-		log('SonosService.id', serviceConfig, 'id', id);
+		// log('SonosService.id', serviceConfig, 'id', id);
 		return id;
 	}
 	
 	static getOrCreateInstance(serviceStore, serviceId, serviceConfig, callback) {
-		log('SonosService getOrCreateInstance', serviceId, serviceConfig);
+		// log('SonosService getOrCreateInstance', serviceId, serviceConfig);
 		// process.exit();
 		
 		if (!sonosInstance) {
@@ -72,18 +74,18 @@ class SonosService extends Service {
 		
 		if (sonosInstance.clients[serviceId]) {
 			let instance = sonosInstance.clients[serviceId];
-			log('RETURNING SONOS CLIENT', instance);
+			instance.log('RETURNING SONOS CLIENT', instance);
 			process.exit();
 			callback(null, instance);
 		}
 		else {
-			log('CREATE SONOS', serviceId, serviceConfig);
+			sonosInstance.log('CREATE SONOS', serviceId, serviceConfig);
 			
-			let onDevice = function(device) {
+			let onDevice = (device) => {
 				if (device.host === serviceConfig.host &&
 					device.port === serviceConfig.port) {
 					
-					log('found sonos', device);
+					sonosInstance.log('found sonos', device);
 					
 					let instance = sonosInstance.create(serviceStore, serviceId, serviceConfig, device);
 					callback(null, instance);

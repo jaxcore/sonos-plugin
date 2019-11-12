@@ -1,6 +1,5 @@
-const {Client, createStore, createLogger} = require('jaxcore-plugin');
+const {Client, createLogger} = require('jaxcore-plugin');
 const {Sonos} = require('sonos');
-const sonosStore = createStore('Sonos Store');
 
 let _instance = 0;
 
