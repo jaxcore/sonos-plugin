@@ -40,6 +40,7 @@ class SonosAdapter extends Adapter {
 						else {
 							diff = spin.buffer(diff, 0, 0);
 							if (diff !== 0) sonos.changeVolume(diff);
+							console.log(sonos.state);
 						}
 					}
 				}

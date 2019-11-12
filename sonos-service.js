@@ -2,7 +2,7 @@ const {Service, createLogger} = require('jaxcore-plugin');
 const {DeviceDiscovery} = require('sonos');
 const SonosClient = require('./sonos-client');
 
-const log = createLogger('SonosService');
+const log = createLogger('Sonos');
 
 let sonosInstance;
 
@@ -49,9 +49,9 @@ class SonosService extends Service {
 		});
 	}
 	
-	create(serviceId, serviceConfig, device) {
+	create(serviceStore, serviceId, serviceConfig, device) {
 		log('serviceConfig');
-		let client = new SonosClient(serviceId, serviceConfig, device);
+		let client = new SonosClient(serviceStore, serviceId, serviceConfig, device);
 		this.clients[client.id] = client;
 		return client;
 	}
@@ -62,7 +62,7 @@ class SonosService extends Service {
 		return id;
 	}
 	
-	static getOrCreateInstance(serviceId, serviceConfig, callback) {
+	static getOrCreateInstance(serviceStore, serviceId, serviceConfig, callback) {
 		log('SonosService getOrCreateInstance', serviceId, serviceConfig);
 		// process.exit();
 		
@@ -79,18 +79,22 @@ class SonosService extends Service {
 		else {
 			log('CREATE SONOS', serviceId, serviceConfig);
 			
-			sonosInstance.addListener('device', function(device) {
+			let onDevice = function(device) {
 				if (device.host === serviceConfig.host &&
 					device.port === serviceConfig.port) {
 					
-					log('found');
+					log('found sonos', device);
 					
-					let instance = sonosInstance.create(serviceId, serviceConfig, device);
+					let instance = sonosInstance.create(serviceStore, serviceId, serviceConfig, device);
 					callback(null, instance);
 					
 					// process.exit();
+					
+					sonosInstance.removeListener('device', onDevice);
 				}
-			});
+			};
+			// todo: setTimeout remove listener
+			sonosInstance.addListener('device', onDevice);
 			
 			sonosInstance.scan();
 			

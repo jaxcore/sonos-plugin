@@ -4,92 +4,93 @@ const sonosStore = createStore('Sonos Store');
 
 let _instance = 0;
 
+const schema = {
+	id: {
+		type: 'string',
+		defaultValue: ''
+	},
+	host: {
+		type: 'string',
+		defaultValue: ''
+	},
+	hostport: {
+		type: 'number',
+		defaultValue: 0
+	},
+	connected: {
+		type: 'boolean',
+		defaultValue: false
+	},
+	muted: {
+		type: 'boolean',
+		defaultValue: false
+	},
+	volume: {
+		type: 'integer',
+		defaultValue: 0,
+		minimum: 'minVolume',
+		maximum: 'maxVolume'
+	},
+	volumePercent: {
+		type: 'float',
+		defaultValue: 0
+	},
+	minVolume: {
+		type: 'integer',
+		defaultValue: 0,
+		maximumValue: 100,
+		minimumValue: 0
+	},
+	maxVolume: {
+		type: 'integer',
+		defaultValue: 100,
+		maximumValue: 100,
+		minimumValue: 0
+	},
+	volumeIncrement: {
+		type: 'integer',
+		defaultValue: 1
+	},
+	playing: {
+		type: 'boolean',
+		defaultValue: false
+	},
+	playlistId: {
+		type: 'string'
+	},
+	paused: {
+		type: 'boolean',
+		defaultValue: false
+	},
+	position: {
+		type: 'integer',
+		defaultValue: 1
+	},
+	positionPercent: {
+		type: 'float',
+		defaultValue: 0
+	},
+	duration: {
+		type: 'integer',
+		defaultValue: 1
+	}
+};
+
 class SonosClient extends Client {
-	constructor(serviceId, serviceConfig, device) {
-		super();
+	constructor(store, serviceId, defaults, device) {
+		super(schema, store, defaults);
 		
 		// this.id = serviceId;
-		serviceConfig.id = serviceId;
+		// defaults.id = serviceId;
 		this.device = device;
 		
-		this.setStore(sonosStore);
+		// this.setStore(sonosStore);
+		// this.setStates(, serviceConfig);
 		
-		this.setStates({
-			id: {
-				type: 'string',
-				defaultValue: ''
-			},
-			host: {
-				type: 'string',
-				defaultValue: ''
-			},
-			hostport: {
-				type: 'number',
-				defaultValue: 0
-			},
-			connected: {
-				type: 'boolean',
-				defaultValue: false
-			},
-			muted: {
-				type: 'boolean',
-				defaultValue: false
-			},
-			volume: {
-				type: 'integer',
-				defaultValue: 0,
-				minimum: 'minVolume',
-				maximum: 'maxVolume'
-			},
-			volumePercent: {
-				type: 'float',
-				defaultValue: 0
-			},
-			minVolume: {
-				type: 'integer',
-				defaultValue: 0,
-				maximumValue: 100,
-				minimumValue: 0
-			},
-			maxVolume: {
-				type: 'integer',
-				defaultValue: 100,
-				maximumValue: 100,
-				minimumValue: 0
-			},
-			volumeIncrement: {
-				type: 'integer',
-				defaultValue: 1
-			},
-			playing: {
-				type: 'boolean',
-				defaultValue: false
-			},
-			playlistId: {
-				type: 'string'
-			},
-			paused: {
-				type: 'boolean',
-				defaultValue: false
-			},
-			position: {
-				type: 'integer',
-				defaultValue: 1
-			},
-			positionPercent: {
-				type: 'float',
-				defaultValue: 0
-			},
-			duration: {
-				type: 'integer',
-				defaultValue: 1
-			}
-		}, serviceConfig);
-		
-		this.id = this.state.id;
+		// this.id = this.state.id;
 		
 		this.log = createLogger('Sonos Client ' + (_instance++));
-		this.log('create', serviceConfig);
+		this.log('create', defaults);
 		
 		this.lastVolumeTime = null;
 		
