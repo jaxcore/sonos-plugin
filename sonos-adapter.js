@@ -1,4 +1,4 @@
-const {Adapter} = require('jaxcore-plugin');
+const {Adapter} = require('jaxcore');
 
 class SonosAdapter extends Adapter {
 	static getDefaultState() {

@@ -1,4 +1,4 @@
-const {Client, createLogger} = require('jaxcore-plugin');
+const {Client, createLogger} = require('jaxcore');
 const {Sonos} = require('sonos');
 
 let _instance = 0;

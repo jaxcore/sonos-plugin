@@ -1,4 +1,4 @@
-node_modules/
+
 *.out
 npm-debug.log
 .DS_STORE
@@ -6,3 +6,5 @@ npm-debug.log
 .node_history
 .log
 yarn.lock
+node_modules/*
+node_modules/
