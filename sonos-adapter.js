@@ -167,7 +167,7 @@ class SonosAdapter extends Adapter {
 	
 	static getServicesConfig(adapterConfig) {
 		return {
-			sonos: adapterConfig.settings.services.sonos
+			sonos: adapterConfig.profile.services.sonos
 		};
 	}
 }
