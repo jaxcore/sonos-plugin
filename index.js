@@ -1,7 +1,7 @@
 module.exports = {
 	services: {
 		sonos: {
-			service: require('./sonos-service'),
+			service: require('./sonos-client'),
 			storeType: 'client'
 		}
 	},

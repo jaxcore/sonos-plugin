@@ -1,5 +1,8 @@
 const {Client, createLogger} = require('jaxcore');
-const {Sonos} = require('sonos');
+const {Sonos, DeviceDiscovery} = require('sonos');
+
+
+let sonosInstances = {};
 
 let _instance = 0;
 
@@ -93,9 +96,11 @@ class SonosClient extends Client {
 		
 		this.lastVolumeTime = null;
 		
-		this.once('teardown', () => {
-			this.stopMonitor();
-		});
+		// this.once('teardown', () => {
+		// 	this.stopMonitor();
+		// });
+		
+		sonosInstances[this.id] = this;
 	}
 	
 	connect() {
@@ -384,6 +389,77 @@ class SonosClient extends Client {
 		clearInterval(this.monitor);
 	}
 	
+	destroy() {
+		this.stopMonitor();
+		try {
+			this.device.destroy();
+		}
+		catch(e) {
+			console.log(e);
+			debugger;
+		}
+		delete sonosInstances[this.id];
+	}
+	
+	static scan(timeout) {
+		return DeviceDiscovery({
+			timeout: timeout || 5000
+		});
+	}
+	
+	static id(serviceConfig) {
+		return 'sonos:'+serviceConfig.host+':'+serviceConfig.port;
+	}
+	
+	static getOrCreateInstance(serviceStore, serviceId, serviceConfig, callback) {
+		if (sonosInstances[serviceId]) {
+			let instance = sonosInstances[serviceId];
+			// instance.log('RETURNING SONOS CLIENT', instance);
+			//process.exit();
+			callback(null, instance, false);
+		}
+		else {
+			console.log('CREATE SONOS', serviceId, serviceConfig);
+			
+			console.log('try scan');
+			let scanner = SonosClient.scan();
+			
+			console.log('try scanning...');
+			scanner.on('DeviceAvailable', (device, model) => {
+				if (device.host === serviceConfig.host && device.port === serviceConfig.port) {
+					console.log('found', device, model);
+					
+					// let instance = sonosInstance.create(serviceStore, serviceId, serviceConfig, device);
+					let instance = new SonosClient(serviceStore, serviceId, serviceConfig, device);
+					
+					callback(null, instance, true);
+					
+					scanner.destroy();
+				}
+				else console.log('DeviceAvailable', device, model);
+			});
+			scanner.on('timeout', () => {
+				console.log('sonos timeout');
+				try {
+					scanner.destroy();
+				}
+				catch(e) {
+					console.log('destroy');
+				}
+				callback({timeout: true});
+			});
+			scanner.on('error', (e) => {
+				console.log('sonos error', e);
+				try {
+					scanner.destroy();
+				}
+				catch(e) {
+					console.log('destroy');
+				}
+				callback({error: e});
+			});
+		}
+	}
 }
 
 module.exports = SonosClient;
