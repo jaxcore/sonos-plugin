@@ -25,7 +25,7 @@ class SonosAdapter extends Adapter {
 				else {
 					if (spin.state.buttonPushed) {
 						// seek
-						this.state.didButtonSpin = true;
+						this.setState({didButtonSpin: true});
 						
 						//diff = spin.buffer(diff, 1, 1);
 						this.showSeek(spin.state.spinPosition);
@@ -48,11 +48,16 @@ class SonosAdapter extends Adapter {
 			button: function (pushed) {
 				this.log('button', pushed);
 				if (pushed) {
-					this.state.didButtonHold = false;
-					this.state.didButtonSpin = false;
-					
-					this.state.seekSpinPosition = spin.state.spinPosition;
-					this.state.seekPlayPosition = sonos.state.positionPercent;
+					this.setState({
+						didButtonHold : false,
+						didButtonSpin : false,
+						seekSpinPosition : spin.state.spinPosition,
+						seekPlayPosition : sonos.state.positionPercent
+					});
+					// this.state.didButtonHold = false;
+					// this.state.didButtonSpin = false;
+					// this.state.seekSpinPosition = spin.state.spinPosition;
+					// this.state.seekPlayPosition = sonos.state.positionPercent;
 					
 				}
 				else {
@@ -74,7 +79,7 @@ class SonosAdapter extends Adapter {
 					this.log('button hold');
 					sonos.next();
 					spin.flash(theme.success);
-					this.state.didButtonHold = true;
+					this.setState({didButtonHold: true});
 				}
 			},
 			knob: function (pushed) {
