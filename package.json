@@ -4,6 +4,7 @@
   "description": "",
   "author": "Jaxcore",
   "dependencies": {
+    "jaxcore": "0.0.2",
     "sonos": "^1.11.1"
   },
   "devDependencies": {},
